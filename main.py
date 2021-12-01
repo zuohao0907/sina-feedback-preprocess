@@ -41,12 +41,9 @@ def last_month(now):
 		
 	
 # ----------sidebar-----------
-lyear = last_month(datetime.now())[0]
-lmonth = last_month(datetime.now())[1]
-
 st.sidebar.write("## 目标时间")
-year = st.sidebar.number_input("year", 2021, 2030, value=lyear)
-month = st.sidebar.number_input("month", 1, 12, value=lmonth)
+year = st.sidebar.number_input("year", 2021, 2030, value=last_month(datetime.now())[0])
+month = st.sidebar.number_input("month", 1, 12, value=last_month(datetime.now())[1])
 
 st.sidebar.write("## 端内原文件")
 files_in = st.sidebar.file_uploader("端内", accept_multiple_files=True)
@@ -91,8 +88,8 @@ if len(files_in) > 0:
 	# 剔除重复did&问题都重复的数据
 	d1, d2 = st.columns(2)
 	if d1.checkbox("剔除重复数据", value=True):
-		dup = len(data_in) - len(data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
-		data_in = data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"])
+		dup = len(data_in) - len(data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"])) - len(data_in.drop_duplicates(subset=["用户UID", "问题类型", "具体问题"]))
+		data_in = data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]).drop_duplicates(subset=["用户UID", "问题类型", "具体问题"])
 		d2.write("删除重复数据：" + str(dup))
 	
 	
