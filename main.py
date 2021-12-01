@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import datetime
+from datetime import datetime
 import io
 import openpyxl
 
@@ -28,11 +28,25 @@ def time_convert(s):
 	s = s.replace("日", "")
 	s = f"{year}-{s}:00"
 	return s
+
+def last_month(now):
+	lmonth = now.month
+	lyear = now.year
+	if now.month == 1:
+		lmonth = 12
+		lyear -= 1
+	else:
+		lmonth -= 1
+	return lyear, lmonth
+		
 	
 # ----------sidebar-----------
+lyear = last_month(datetime.now())[0]
+lmonth = last_month(datetime.now())[1]
+
 st.sidebar.write("## 目标时间")
-year = st.sidebar.number_input("year", 2021, 2030)
-month = st.sidebar.number_input("month", 1, 12)
+year = st.sidebar.number_input("year", 2021, 2030, value=lyear)
+month = st.sidebar.number_input("month", 1, 12, value=lmonth)
 
 st.sidebar.write("## 端内原文件")
 files_in = st.sidebar.file_uploader("端内", accept_multiple_files=True)
@@ -44,11 +58,11 @@ files_out = st.sidebar.file_uploader("端外", accept_multiple_files=True)
 
 # ----------content-----------
 
-start = datetime.datetime(year, month, 1)
+start = datetime(year, month, 1)
 if month == 12:
-	end = datetime.datetime(year+1, 1, 1)
+	end = datetime(year+1, 1, 1)
 else:
-	end = datetime.datetime(year, month+1, 1)
+	end = datetime(year, month+1, 1)
 
 columns = ["反馈时间", "用户UID", "用户昵称", "问题类型", "具体问题", "问题详情", "图片", "客户端", "手机系统版本", "手机型号", "设备ID", "联系方式", "问题是否解决/第一次登陆", "最后一次登陆"]
 #cls = ["登录问题", "功能建议", "广告类", "金币咨询", "客户端功能", "每日领红包", "每日赢大奖", "内容问题", "评论问题", "视频问题", "图片问题", "推荐问题", "无效问题", "疫情情况", "疫情数据", "余额", "账号相关咨询", "PUSH类"]
