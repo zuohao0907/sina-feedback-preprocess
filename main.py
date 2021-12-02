@@ -193,14 +193,6 @@ if files_in:
 			indata.rename_cls(rename_str1, True)
 		if rename_str2:
 			indata.rename_cls(rename_str2, False)
-	
-	# 转移分类
-	d9, d10 = st.columns(2)
-	transfer_btn = d9.checkbox("转移分类")
-	if transfer_btn:
-		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）")
-		if transfer_str:
-			indata.transfer_cls(transfer_str)
 			
 	# 检查无效分类
 	d11, d12 = st.columns(2)
@@ -208,6 +200,14 @@ if files_in:
 	if checknull_btn:
 		with st.expander("检查无效分类"):
 			indata.check_null()
+			
+	# 转移分类
+	d9, d10 = st.columns(2)
+	transfer_btn = d9.checkbox("转移分类")
+	if transfer_btn:
+		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）")
+		if transfer_str:
+			indata.transfer_cls(transfer_str)
 	
 	st.markdown("# 端内结果")
 	st.dataframe(indata.data_in)
