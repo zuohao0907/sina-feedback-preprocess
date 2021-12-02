@@ -79,7 +79,7 @@ class InClient(object):
 		
 	def drop_duplicate(self):
 		dup = len(self.data_in) - len(self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
-		self.data_in = self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
+		self.data_in = self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"])
 		self.data_in.reset_index(inplace=True, drop=True)
 		return dup
 	
