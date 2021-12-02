@@ -107,14 +107,14 @@ class InClient(object):
 			# self.data_in.query("问题类型 == '%s'" % first, inplace=True).assign(问题类型=second, 具体问题=first)
 			self.data_in.loc[self.data_in["问题类型"]==first, ['问题类型', '具体问题']] = [second, first]
 			
-#	def check_null(self):
-#		n = 0
-#		for i in range(len(self.data_in)):
-#			if self.data_in[i, "问题类型"] == "无效问题" and is_chinese(str(self.data_in.loc[i, "问题详情"])):
-#				n += 1
-#				st.markdown(f"> {n}. " + str(self.data_in.loc[i, '问题详情']))
-#				self.data_in.loc[i, "问题类型"] = st.selectbox("问题类型_" + str(n), self.data_in["问题类型"].unique(), list(self.data_in["问题类型"].unique()).index("无效问题"))
-#				self.data_in.loc[i, "具体问题"] = st.selectbox("具体问题_" + str(n), self.data_in[self.data_in["问题类型"]==self.data_in.loc[i, "问题类型"]]["具体问题"].unique())
+	def check_null(self):
+		n = 0
+		for i in range(len(self.data_in)):
+			if self.data_in.loc[i, "问题类型"] == "无效问题" and is_chinese(str(self.data_in.loc[i, "问题详情"])):
+				n += 1
+				st.markdown(f"> {n}. " + str(self.data_in.loc[i, '问题详情']))
+				self.data_in.loc[i, "问题类型"] = st.selectbox("问题类型_" + str(n), self.data_in["问题类型"].unique(), list(self.data_in["问题类型"].unique()).index("无效问题"))
+				self.data_in.loc[i, "具体问题"] = st.selectbox("具体问题_" + str(n), self.data_in[self.data_in["问题类型"]==self.data_in.loc[i, "问题类型"]]["具体问题"].unique())
 			
 class OutClient(object):
 	name = ["iOS", "华为", "小米", "OPPO", "VIVO", "魅族", "微博"]
@@ -138,6 +138,14 @@ class OutClient(object):
 		data_out = pd.concat(data_ls, ignore_index=True)
 		data_out = data_out.sort_values(by=["评论时间"]).reset_index(drop=True)
 		self.data_out = data_out.astype('str')
+		
+	def select_cls(self):
+		for i in range(len(self.data_out)):
+			if is_chinese(self.data_out.loc[i, "内容"]):
+				st.markdown(f"> {i+1}. " + str(self.data_out.loc[i, '内容']))
+				self.data_out.loc[i, "问题分类"] = st.selectbox("问题分类_" + str(i+1), ["Push", "标题党", "功能", "广告", "活动", "内容", "其他", "强制下载", "提现", "性能", "账号"], index=6)
+			else:
+				self.data_out.loc[i, "问题分类"] = "其他"
 	
 			
 # GUI部分
@@ -194,14 +202,14 @@ if files_in:
 		if transfer_str:
 			indata.transfer_cls(transfer_str)
 			
-#	# 检查无效分类
-#	d11, d12 = st.columns(2)
-#	checknull_btn = d11.checkbox("检查无效分类")
-#	if checknull_btn:
-#		with st.expander("检查无效分类"):
-#			indata.check_null()
-#		null = len(indata.data_in[indata.data_in["问题类型"]=="无效问题"])
-#		d12.text(f"无效分类数：{null}")
+	# 检查无效分类
+	d11, d12 = st.columns(2)
+	checknull_btn = d11.checkbox("检查无效分类")
+	if checknull_btn:
+		with st.expander("检查无效分类"):
+			with st.form("无效表单"):
+				indata.check_null()
+				st.form_submit_button("提交")
 	
 	st.markdown("# 端内结果")
 	st.dataframe(indata.data_in)
@@ -213,6 +221,15 @@ if files_in:
 ### 端外结果
 if files_out:
 	outdata = OutClient(files_out)
+	
+	# 修改其他分类
+	d13, d14 = st.columns(2)
+	select_other_btn = d13.checkbox("修改其他分类")
+	if select_other_btn:
+		with st.expander("修改其他分类"):
+			with st.form("其他表单"):
+				outdata.select_cls()
+				st.form_submit_button("提交")
 	
 	st.markdown("# 端外结果")
 	st.dataframe(outdata.data_out)
