@@ -207,9 +207,7 @@ if files_in:
 	checknull_btn = d11.checkbox("检查无效分类")
 	if checknull_btn:
 		with st.expander("检查无效分类"):
-			with st.form("无效表单"):
-				indata.check_null()
-				st.form_submit_button("提交")
+			indata.check_null()
 	
 	st.markdown("# 端内结果")
 	st.dataframe(indata.data_in)
@@ -227,9 +225,7 @@ if files_out:
 	select_other_btn = d13.checkbox("修改其他分类")
 	if select_other_btn:
 		with st.expander("修改其他分类"):
-			with st.form("其他表单"):
-				outdata.select_cls()
-				st.form_submit_button("提交")
+			outdata.select_cls()
 	
 	st.markdown("# 端外结果")
 	st.dataframe(outdata.data_out)
