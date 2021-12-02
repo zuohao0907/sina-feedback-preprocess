@@ -78,8 +78,8 @@ class InClient(object):
 		self.data_in = data_in.astype('str')
 		
 	def drop_duplicate(self):
-		dup = len(self.data_in) - len(self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]).drop_duplicates(subset=["用户UID", "问题类型", "具体问题"]))
-		self.data_in = self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]).drop_duplicates(subset=["用户UID", "问题类型", "具体问题"])
+		dup = len(self.data_in) - len(self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
+		self.data_in = self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
 		self.data_in.reset_index(inplace=True, drop=True)
 		return dup
 	
