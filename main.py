@@ -110,14 +110,16 @@ class InClient(object):
 	def check_null(self):
 		n = 0
 		for i in range(len(self.data_in)):
-			if self.data_in.loc[i, "问题类型"] == "无效问题" and is_chinese(str(self.data_in.loc[i, "问题详情"])):
-				n += 1
-				st.markdown(f"> {n}. " + str(self.data_in.loc[i, '问题详情']))
-				self.data_in.loc[i, "问题类型"] = st.selectbox("问题类型_" + str(n), self.data_in["问题类型"].unique(), list(self.data_in["问题类型"].unique()).index("无效问题"))
-				self.data_in.loc[i, "具体问题"] = st.selectbox("具体问题_" + str(n), self.data_in[self.data_in["问题类型"]==self.data_in.loc[i, "问题类型"]]["具体问题"].unique())
-				if st.checkbox("删除此反馈", key=n):
+			if self.data_in.loc[i, "问题类型"] == "无效问题":
+				if is_chinese(str(self.data_in.loc[i, "问题详情"])):
+					n += 1
+					st.markdown(f"> {n}. " + str(self.data_in.loc[i, '问题详情']))
+					self.data_in.loc[i, "问题类型"] = st.selectbox("问题类型_" + str(n), self.data_in["问题类型"].unique(), list(self.data_in["问题类型"].unique()).index("无效问题"))
+					self.data_in.loc[i, "具体问题"] = st.selectbox("具体问题_" + str(n), self.data_in[self.data_in["问题类型"]==self.data_in.loc[i, "问题类型"]]["具体问题"].unique())
+					if st.checkbox("删除此反馈", key=n):
+						self.data_in.drop(index=i, inplace=True)
+				else:
 					self.data_in.drop(index=i, inplace=True)
-					
 			
 class OutClient(object):
 	name = ["iOS", "华为", "小米", "OPPO", "VIVO", "魅族", "微博"]
