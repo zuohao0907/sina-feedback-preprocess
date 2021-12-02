@@ -9,7 +9,7 @@ import openpyxl
 def output_file(data):
 	output = io.BytesIO()
 	writer = pd.ExcelWriter(output, engine='xlsxwriter')
-	data.to_excel(writer)
+	data.to_excel(writer, index=False)
 	writer.save()
 	return output
 
