@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 import io
 import openpyxl
+import sys
 
 def output_file(data):
 	output = io.BytesIO()
@@ -61,7 +62,10 @@ class InClient(object):
 	def __init__(self, in_client_files, year, month):
 		data_ls = []
 		for file in in_client_files:
-			data = pd.read_excel(file, usecols=range(14))
+			try:
+				data = pd.read_excel(file, usecols=range(14))
+			except:
+				raise Exception(f"文件错误=>{file.name}")
 			# 重命名表头
 			data.columns = self.columns
 			# 剔除空数据
@@ -126,20 +130,23 @@ class OutClient(object):
 	def __init__(self, out_client_files):
 		data_ls = []
 		for file in out_client_files:
-			if file.name == "微博.xlsx":
-				data = pd.read_excel(file)
-				data.rename(columns={"反馈日期": "评论时间", "用户昵称": "评论人", "反馈内容": "内容"}, inplace=True)
-				data["评论时间"] = data["评论时间"].apply(lambda x: time_convert(x))
-				wb = openpyxl.load_workbook(file)
-				ws = wb.get_sheet_by_name('Sheet1')
-				for i in range(len(data)):
-					data.loc[i, "标题"] = ws.cell(row=i+2, column=1).hyperlink.target
-			else:
-				data = pd.read_excel(file, skiprows=2)
-				data.drop(columns="Unnamed: 0", inplace=True)
-				if file.name == "iOS.xlsx":
-					data.rename(columns={"发表时间": "评论时间", "作者": "评论人", "评级": "星级"}, inplace=True)
-			data_ls.append(data)
+			try:
+				if file.name == "微博.xlsx":
+					data = pd.read_excel(file)
+					data.rename(columns={"反馈日期": "评论时间", "用户昵称": "评论人", "反馈内容": "内容"}, inplace=True)
+					data["评论时间"] = data["评论时间"].apply(lambda x: time_convert(x))
+					wb = openpyxl.load_workbook(file)
+					ws = wb.get_sheet_by_name('Sheet1')
+					for i in range(len(data)):
+						data.loc[i, "标题"] = ws.cell(row=i+2, column=1).hyperlink.target
+				else:
+					data = pd.read_excel(file, skiprows=2)
+					data.drop(columns="Unnamed: 0", inplace=True)
+					if file.name == "iOS.xlsx":
+						data.rename(columns={"发表时间": "评论时间", "作者": "评论人", "评级": "星级"}, inplace=True)
+				data_ls.append(data)
+			except:
+				raise Exception(f"文件错误=>{file.name}")
 		data_out = pd.concat(data_ls, ignore_index=True)
 		data_out = data_out.sort_values(by=["评论时间"]).reset_index(drop=True)
 		self.data_out = data_out.astype('str')
@@ -175,26 +182,27 @@ if files_in:
 	
 	# 剔除重复数据
 	d3, d4 = st.columns(2)
-	drop_btn = d3.checkbox("剔除重复数据")
+	drop_btn = d3.checkbox("1. 剔除重复数据")
 	if drop_btn:
 		dup = indata.drop_duplicate()
 		d4.text(f"删除重复数据：{dup}")
 	
 	# 剔除活动数据
 	d5, d6 = st.columns(2)
-	activity_btn = d5.checkbox("剔除活动数据")
+	activity_btn = d5.checkbox("2. 剔除活动数据")
 	if activity_btn:
 		options = indata.data_in["问题类型"].unique()
-		with open("activities.txt", "r") as f:
+		print(f"options:{options}")
+		with open("inapp_data/activities.txt", "r") as f:
 			default_activities = f.read().splitlines()
-			for item in default_activities:
-				if item not in options:
-					default_activities.remove(item)
+			print(default_activities)
+			default_activities = list(set(default_activities).intersection(set(options)))
+			print(default_activities)
 		selected_cls = st.multiselect("请选择活动分类", options=options, default=default_activities)
 		activity = indata.drop_activity(selected_cls)
 		d6.text(f"删除活动数据：{activity}")
 		if st.button("保存输入", key="save_activities"):
-			with open("activities.txt", "w") as f:
+			with open("inapp_data/activities.txt", "w") as f:
 				for idx, val in enumerate(selected_cls):
 					if idx != -1:
 						f.writelines(val+"\n")
@@ -203,11 +211,11 @@ if files_in:
 		
 	# 重命名分类
 	d7, d8 = st.columns(2)
-	rename_btn = d7.checkbox("重命名分类")
+	rename_btn = d7.checkbox("3. 重命名分类")
 	if rename_btn:
-		with open("rename1.txt", 'r') as f:
+		with open("inapp_data/rename1.txt", 'r') as f:
 			rename_str1 = f.read()
-		with open("rename2.txt", 'r') as f:
+		with open("inapp_data/rename2.txt", 'r') as f:
 			rename_str2 = f.read()
 		rename_str1 = st.text_area("请输入要修改的一级分类：（旧）->（新）", value=rename_str1)
 		rename_str2 = st.text_area("请输入要修改的二级分类：（旧）->（新）", value=rename_str2)
@@ -217,30 +225,30 @@ if files_in:
 		if rename_str2:
 			indata.rename_cls(rename_str2, False)
 		if st.button("保存输入", key="save_rename"):
-			with open("rename1.txt", "w") as f:
+			with open("inapp_data/rename1.txt", "w") as f:
 				f.write(rename_str1)
-			with open("rename2.txt", "w") as f:
+			with open("inapp_data/rename2.txt", "w") as f:
 				f.write(rename_str2)
 			
 	# 检查无效分类
 	d11, d12 = st.columns(2)
-	checknull_btn = d11.checkbox("检查无效分类")
+	checknull_btn = d11.checkbox("4. 检查无效分类")
 	if checknull_btn:
 		with st.expander("检查无效分类"):
 			indata.check_null()
 			
 	# 转移分类
 	d9, d10 = st.columns(2)
-	transfer_btn = d9.checkbox("转移分类")
+	transfer_btn = d9.checkbox("5. 转移分类")
 	if transfer_btn:
-		with open("transfer.txt", 'r') as f:
+		with open("inapp_data/transfer.txt", 'r') as f:
 			transfer_str = f.read()
 		st.markdown("> 将一级分类转为另一个一级分类的子分类")
 		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）", value=transfer_str)
 		if transfer_str:
 			indata.transfer_cls(transfer_str)
 		if st.button("保存输入", key="save_transfer"):
-			with open("transfer.txt", "w") as f:
+			with open("inapp_data/transfer.txt", "w") as f:
 				f.write(transfer_str)
 	
 	st.markdown("# 端内结果")
