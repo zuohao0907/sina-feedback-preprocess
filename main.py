@@ -65,7 +65,7 @@ class InClient(object):
 			try:
 				data = pd.read_excel(file, usecols=range(14))
 			except:
-				raise Exception(f"文件错误=>{file.name}")
+				st.error(f"文件错误=>{file.name}")
 			# 重命名表头
 			data.columns = self.columns
 			# 剔除空数据
@@ -80,6 +80,7 @@ class InClient(object):
 		data_in = pd.concat(data_ls, ignore_index=True)
 		data_in = data_in.sort_values(by=["反馈时间"]).reset_index(drop=True)
 		self.data_in = data_in.astype('str')
+		st.balloons()
 		
 	def drop_duplicate(self):
 		dup = len(self.data_in) - len(self.data_in.drop_duplicates(subset=["设备ID", "问题类型", "具体问题"]))
@@ -146,10 +147,11 @@ class OutClient(object):
 						data.rename(columns={"发表时间": "评论时间", "作者": "评论人", "评级": "星级"}, inplace=True)
 				data_ls.append(data)
 			except:
-				raise Exception(f"文件错误=>{file.name}")
+				st.error(f"文件错误=>{file.name}")
 		data_out = pd.concat(data_ls, ignore_index=True)
 		data_out = data_out.sort_values(by=["评论时间"]).reset_index(drop=True)
 		self.data_out = data_out.astype('str')
+		st.balloons()
 		
 	def select_cls(self):
 		for i in range(len(self.data_out)):
@@ -165,21 +167,20 @@ class OutClient(object):
 st.sidebar.markdown("# 目标时间")
 year = st.sidebar.number_input("年", 2021, 2099, value=last_month(datetime.now())[0])
 month = st.sidebar.number_input("月", 1, 12, value=last_month(datetime.now())[1])
+st.sidebar.markdown("> 开始时间：" + str(time_start_end(year, month)[0]))
+st.sidebar.markdown("> 结束时间：" + str(time_start_end(year, month)[1]))
 
 st.sidebar.markdown("# 原始文件")
 files_in = st.sidebar.file_uploader("端内", accept_multiple_files=True)
 files_out = st.sidebar.file_uploader("端外", accept_multiple_files=True)
 
 ## Content
-st.markdown("# 时间范围")
-d1, d2 = st.columns(2)
-d1.text("开始时间：" + str(time_start_end(year, month)[0]))
-d2.text("结束时间：" + str(time_start_end(year, month)[1]))
 
 ### 端内结果
 if files_in:
 	indata = InClient(files_in, year, month)
 	
+	st.markdown("# 数据修改")
 	# 剔除重复数据
 	d3, d4 = st.columns(2)
 	drop_btn = d3.checkbox("1. 剔除重复数据")
@@ -192,22 +193,10 @@ if files_in:
 	activity_btn = d5.checkbox("2. 剔除活动数据")
 	if activity_btn:
 		options = indata.data_in["问题类型"].unique()
-		print(f"options:{options}")
-		with open("inapp_data/activities.txt", "r") as f:
-			default_activities = f.read().splitlines()
-			print(default_activities)
-			default_activities = list(set(default_activities).intersection(set(options)))
-			print(default_activities)
-		selected_cls = st.multiselect("请选择活动分类", options=options, default=default_activities)
+		selected_cls = st.multiselect("请选择活动分类", options=options)
 		activity = indata.drop_activity(selected_cls)
 		d6.text(f"删除活动数据：{activity}")
-		if st.button("保存输入", key="save_activities"):
-			with open("inapp_data/activities.txt", "w") as f:
-				for idx, val in enumerate(selected_cls):
-					if idx != -1:
-						f.writelines(val+"\n")
-					else:
-						f.writelines(val)
+
 		
 	# 重命名分类
 	d7, d8 = st.columns(2)
@@ -251,7 +240,7 @@ if files_in:
 			with open("inapp_data/transfer.txt", "w") as f:
 				f.write(transfer_str)
 	
-	st.markdown("# 端内结果")
+	st.markdown("# 端内结果预览")
 	st.dataframe(indata.data_in)
 	plot_fig(indata.data_in["问题类型"], indata.data_in)
 	r1, r2 = st.columns(2)
@@ -262,6 +251,8 @@ if files_in:
 if files_out:
 	outdata = OutClient(files_out)
 	
+	st.markdown("# 数据修改")
+	
 	# 修改其他分类
 	d13, d14 = st.columns(2)
 	select_other_btn = d13.checkbox("修改其他分类")
@@ -269,7 +260,7 @@ if files_out:
 		with st.expander("修改其他分类"):
 			outdata.select_cls()
 	
-	st.markdown("# 端外结果")
+	st.markdown("# 端外结果预览")
 	st.dataframe(outdata.data_out)
 	plot_fig(outdata.data_out["问题类型"], outdata.data_out)
 	r3, r4 = st.columns(2)
