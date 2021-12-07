@@ -6,11 +6,6 @@ from datetime import datetime
 import io
 import openpyxl
 
-default_transfer_str = """
-视频问题->其它
-图片问题->其他
-"""
-
 def output_file(data):
 	output = io.BytesIO()
 	writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -215,9 +210,15 @@ if files_in:
 	d9, d10 = st.columns(2)
 	transfer_btn = d9.checkbox("转移分类")
 	if transfer_btn:
-		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）", value=default_transfer_str)
+		with open("transfer.txt", 'r') as f:
+			transfer_str = f.read()
+		st.markdown("> 将一级分类转为另一个一级分类的二级分类")
+		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）", value=transfer_str)
 		if transfer_str:
 			indata.transfer_cls(transfer_str)
+		if st.button("保存输入"):
+			with open("transfer.txt", "w") as f:
+				f.write(transfer_str)
 	
 	st.markdown("# 端内结果")
 	st.dataframe(indata.data_in)
