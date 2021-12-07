@@ -235,7 +235,7 @@ if files_in:
 	if transfer_btn:
 		with open("transfer.txt", 'r') as f:
 			transfer_str = f.read()
-		st.markdown("> 将一级分类转为另一个一级分类的二级分类")
+		st.markdown("> 将一级分类转为另一个一级分类的子分类")
 		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）", value=transfer_str)
 		if transfer_str:
 			indata.transfer_cls(transfer_str)
