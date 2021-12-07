@@ -184,20 +184,43 @@ if files_in:
 	d5, d6 = st.columns(2)
 	activity_btn = d5.checkbox("剔除活动数据")
 	if activity_btn:
-		selected_cls = st.multiselect("请选择活动分类", options=indata.data_in["问题类型"].unique())
+		options = indata.data_in["问题类型"].unique()
+		with open("activities.txt", "r") as f:
+			default_activities = f.read().splitlines()
+			for item in default_activities:
+				if item not in options:
+					default_activities.remove(item)
+		selected_cls = st.multiselect("请选择活动分类", options=options, default=default_activities)
 		activity = indata.drop_activity(selected_cls)
 		d6.text(f"删除活动数据：{activity}")
+		if st.button("保存输入", key="save_activities"):
+			with open("activities.txt", "w") as f:
+				for idx, val in enumerate(selected_cls):
+					if idx != -1:
+						f.writelines(val+"\n")
+					else:
+						f.writelines(val)
 		
 	# 重命名分类
 	d7, d8 = st.columns(2)
 	rename_btn = d7.checkbox("重命名分类")
 	if rename_btn:
-		rename_str1 = st.text_area("请输入要修改的一级分类：（旧）->（新）")
-		rename_str2 = st.text_area("请输入要修改的二级分类：（旧）->（新）")
+		with open("rename1.txt", 'r') as f:
+			rename_str1 = f.read()
+		with open("rename2.txt", 'r') as f:
+			rename_str2 = f.read()
+		rename_str1 = st.text_area("请输入要修改的一级分类：（旧）->（新）", value=rename_str1)
+		rename_str2 = st.text_area("请输入要修改的二级分类：（旧）->（新）", value=rename_str2)
+		
 		if rename_str1:
 			indata.rename_cls(rename_str1, True)
 		if rename_str2:
 			indata.rename_cls(rename_str2, False)
+		if st.button("保存输入", key="save_rename"):
+			with open("rename1.txt", "w") as f:
+				f.write(rename_str1)
+			with open("rename2.txt", "w") as f:
+				f.write(rename_str2)
 			
 	# 检查无效分类
 	d11, d12 = st.columns(2)
@@ -216,7 +239,7 @@ if files_in:
 		transfer_str = st.text_area("请输入要转移的分类：一级（旧）->一级（新）", value=transfer_str)
 		if transfer_str:
 			indata.transfer_cls(transfer_str)
-		if st.button("保存输入"):
+		if st.button("保存输入", key="save_transfer"):
 			with open("transfer.txt", "w") as f:
 				f.write(transfer_str)
 	
